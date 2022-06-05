@@ -6,7 +6,6 @@ import java.awt.FlowLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-import pkg.EzEditor;
 import pkg.Vars;
 
 public class NavBar extends JPanel {
