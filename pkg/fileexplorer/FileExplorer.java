@@ -72,12 +72,11 @@ public class FileExplorer extends JPanel {
 
     private void displayFiles(String workdir) {
         center = new JPanel();
-        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS));
-        // add left margin
-        // left: (this.layer * 7) + 5
-        center.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-        // center.setBackground(Color.darkGray);
-        center.setBackground(Color.white);
+        center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS)); // add left margin
+        center.setBorder(BorderFactory.createEmptyBorder(0, (this.layer * 5) + 5, 0, 0));
+        center.setBackground(Color.darkGray);
+        center.setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
+        center.setAlignmentX(0);
         add(center, BorderLayout.WEST);
         File[] files = new File(workdir).listFiles();
         files = files == null ? new File[0] : files;
@@ -91,13 +90,16 @@ public class FileExplorer extends JPanel {
                 folders.add(file);
                 continue;
             }
+            JPanel fileContainer = new JPanel(new FlowLayout(0));
+            fileContainer.setBackground(Color.darkGray);
             JButton f = new JButton(file.getName());
             f.setBackground(Color.darkGray);
             f.setForeground(Color.white);
             f.setContentAreaFilled(false);
             f.setBorder(new EmptyBorder(0, 0, 0, 0));
             f.setMargin(new Insets(0, 0, 0, 0));
-            center.add(f);
+            fileContainer.add(f);
+            center.add(fileContainer);
 
             f.addActionListener(openFileHandler(workdir));
         }
