@@ -2,6 +2,8 @@ package pkg.editor;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 
 import javax.swing.JPanel;
@@ -13,7 +15,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 
-import pkg.EzEditor;
 import pkg.Vars;
 
 public class Editor extends JPanel {
@@ -39,8 +40,8 @@ public class Editor extends JPanel {
         textArea = new JTextPane();
         textArea.setFont(textArea.getFont().deriveFont(16f));
 
-        JScrollPane jsp = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        JScrollPane jsp = new JScrollPane(textArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         add(jsp, BorderLayout.CENTER);
 
@@ -58,8 +59,10 @@ public class Editor extends JPanel {
 
             @Override
             public void keyPressed(KeyEvent e) {
+                if (filePath.length() == 0)
+                    return;
                 if ((e.getKeyCode() == KeyEvent.VK_S) && ((e.getModifiersEx() & KeyEvent.CTRL_DOWN_MASK) != 0)) {
-                    System.out.println("woot!");
+                    save();
                 }
             }
 
@@ -72,6 +75,20 @@ public class Editor extends JPanel {
 
             @Override
             public void insertUpdate(DocumentEvent e) {
+                if (filePath.length() == 0) {
+                    textArea.setEditable(false);
+                    textArea.setFocusable(false);
+                    textArea.setFocusable(true);
+                    SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                            setContents("");
+                        }
+
+                    });
+                    return;
+                } else {
+                    textArea.setEditable(true);
+                }
 
                 try {
                     String newLetter = e.getDocument().getText(e.getOffset(), e.getLength());
@@ -151,8 +168,6 @@ public class Editor extends JPanel {
                     });
                 movePointer();
 
-                // Colorize
-
             }
 
             @Override
@@ -197,8 +212,23 @@ public class Editor extends JPanel {
         }
     }
 
+    public void open(String path, String contents) {
+        filePath = path;
+        textArea.setText(contents);
+    }
+
     public void setContents(String contents) {
         textArea.setText(contents);
+    }
+
+    private void save() {
+        try {
+            FileWriter fw = new FileWriter(filePath);
+            fw.write(textArea.getText());
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void movePointer(int point) {

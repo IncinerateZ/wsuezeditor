@@ -5,7 +5,7 @@ import pkg.fileexplorer.FileExplorer;
 import pkg.navbar.NavBar;
 
 public class Vars {
-    public static FileExplorer fileExplorer = new FileExplorer("./workspace/");
+    public static FileExplorer fileExplorer;
     public static Editor editor = new Editor();
     public static NavBar navbar = new NavBar();
 

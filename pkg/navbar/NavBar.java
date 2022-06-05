@@ -1,6 +1,7 @@
 package pkg.navbar;
 
 import java.awt.Color;
+import java.awt.FlowLayout;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -13,6 +14,7 @@ public class NavBar extends JPanel {
 
     public NavBar() {
         setBackground(Color.lightGray);
+        setLayout(new FlowLayout(FlowLayout.RIGHT));
 
         JButton runBtn = new JButton("Compile & Run");
         add(runBtn);
