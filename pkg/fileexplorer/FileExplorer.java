@@ -1,12 +1,15 @@
 package pkg.fileexplorer;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -14,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.JOptionPane;
 import javax.swing.border.EmptyBorder;
 
 import pkg.Vars;
@@ -23,11 +27,13 @@ public class FileExplorer extends JPanel {
         FILE, FOLDER
     }
 
-    Vars vars;
-
-    JPanel top, center;
+    public JPanel top, center;
 
     private int layer = 0;
+
+    private boolean isMakingProto = false;
+    private Component proto = null;
+    private FileType protoType = null;
 
     public FileExplorer(String workdir) {
         this(workdir, 0);
@@ -44,6 +50,16 @@ public class FileExplorer extends JPanel {
 
         /* CENTER */
         displayFiles(workdir);
+
+        addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (!isMakingProto)
+                    return;
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    removeProto(proto);
+                }
+            }
+        });
     }
 
     private void displayFolderHeader(String workdir) {
@@ -54,6 +70,7 @@ public class FileExplorer extends JPanel {
         add(top, BorderLayout.NORTH);
 
         JLabel label = new JLabel(dir.getName());
+        label.setFont(new Font("Arial", Font.PLAIN, 12));
         label.setForeground(Color.white);
         top.add(label);
 
@@ -71,11 +88,12 @@ public class FileExplorer extends JPanel {
     }
 
     private void displayFiles(String workdir) {
+        if (center != null)
+            remove(center);
         center = new JPanel();
         center.setLayout(new BoxLayout(center, BoxLayout.Y_AXIS)); // add left margin
         center.setBorder(BorderFactory.createEmptyBorder(0, (this.layer * 5) + 5, 0, 0));
         center.setBackground(Color.darkGray);
-        center.setMaximumSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
         center.setAlignmentX(0);
         add(center, BorderLayout.WEST);
         File[] files = new File(workdir).listFiles();
@@ -93,6 +111,7 @@ public class FileExplorer extends JPanel {
             JPanel fileContainer = new JPanel(new FlowLayout(0));
             fileContainer.setBackground(Color.darkGray);
             JButton f = new JButton(file.getName());
+            f.setFont(new Font("Arial", Font.PLAIN, 12));
             f.setBackground(Color.darkGray);
             f.setForeground(Color.white);
             f.setContentAreaFilled(false);
@@ -107,27 +126,91 @@ public class FileExplorer extends JPanel {
         for (File folder : folders)
             center.add(new FileExplorer(workdir + folder.getName() + "/", this.layer + 1));
 
+        revalidate();
     }
 
     private ActionListener newFileFolderHandler(String workdir, FileType type) {
         return new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                switch (type) {
-                    case FILE:
-                        protoFile(workdir);
-                        break;
-                    case FOLDER:
-                        break;
-                }
-
-                return;
+                newProto(workdir);
+                protoType = type;
             }
         };
     }
 
-    private void protoFile(String workdir) {
-        System.out.println("protoFile");
-        JTextField nameField = new JTextField("new file");
+    private void newProto(String workdir) {
+        JPanel fileContainer = new JPanel(new FlowLayout(0));
+        fileContainer.setBackground(Color.darkGray);
+
+        JTextField nameField = new JTextField();
+        nameField.setFont(new Font("Arial", Font.PLAIN, 12));
+        nameField.setBackground(Color.darkGray);
+        nameField.setForeground(Color.white);
+        nameField.setPreferredSize(new Dimension(150, 20));
+        nameField.setMargin(new Insets(1, 3, 1, 2));
+
+        fileContainer.add(nameField);
+        center.add(fileContainer, 0);
+
+        nameField.requestFocus();
+
+        nameField.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                protoEnterHandler(workdir);
+            }
+        });
+
+        this.proto = nameField;
+        protoFocusOutHandler(nameField);
+        this.revalidate();
+    }
+
+    private void removeProto(Component c) {
+        c.setFocusable(false);
+        center.remove(c.getParent());
+        this.revalidate();
+        this.isMakingProto = false;
+        this.proto = null;
+    }
+
+    private void protoEnterHandler(String workdir) {
+        switch (protoType) {
+            case FILE:
+                fileFromProto(workdir);
+                break;
+            case FOLDER:
+                folderFromProto(workdir);
+                break;
+        }
+    }
+
+    private void fileFromProto(String workdir) {
+        String name = ((JTextField) proto).getText();
+        File file = new File(workdir + name);
+        if (file.exists()) {
+            JOptionPane.showMessageDialog(this, "File already exists");
+            return;
+        }
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        removeProto(proto);
+        displayFiles(workdir);
+    }
+
+    private void folderFromProto(String workdir) {
+        String name = ((JTextField) proto).getText();
+        File file = new File(workdir + name);
+        if (file.exists()) {
+            JOptionPane.showMessageDialog(this, "Folder already exists");
+            return;
+        }
+        file.mkdir();
+        removeProto(proto);
+        displayFiles(workdir);
     }
 
     private ActionListener openFileHandler(String workdir) {
@@ -137,17 +220,28 @@ public class FileExplorer extends JPanel {
                 JButton src = (JButton) e.getSource();
 
                 try {
-                    String content = Files.readString(new File(workdir + src.getText()).toPath());
+                    BufferedReader buffer = new BufferedReader(
+                            new InputStreamReader(new FileInputStream(workdir + src.getText())));
+
+                    String content = buffer.lines().collect(Collectors.joining(System.lineSeparator()));
+                    buffer.close();
 
                     Vars.editor.open(workdir + src.getText(), content);
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
+
             }
         };
     }
 
-    public void setVars(Vars vars) {
-        this.vars = vars;
+    private void protoFocusOutHandler(Component c) {
+        isMakingProto = true;
+        c.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                removeProto(c);
+            }
+        });
     }
 }
