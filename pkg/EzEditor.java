@@ -11,13 +11,17 @@ import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.text.BadLocationException;
 
 import pkg.fileexplorer.FileExplorer;
+import pkg.navbar.NavBar;
 
 public class EzEditor {
 
+    public JFrame main;
+
     public EzEditor(String workspace) {
-        JFrame main = new JFrame("EzEditor for Java");
+        this.main = new JFrame("EzEditor for Java");
 
         Vars.fileExplorer = new FileExplorer(workspace);
+        Vars.navbar = new NavBar(workspace);
 
         main.setLayout(new BorderLayout());
         main.add(Vars.navbar, BorderLayout.NORTH);
@@ -57,7 +61,7 @@ public class EzEditor {
         String workdir = wd.getSelectedFile() == null ? wd.getCurrentDirectory().getPath()
                 : wd.getSelectedFile().getPath();
 
-        Vars.navbar.workdir = workdir + '/';
+        // Vars.navbar.workdir = workdir + '/';
         EzEditor main = new EzEditor(workdir + "/");
     };
 }

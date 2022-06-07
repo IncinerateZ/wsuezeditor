@@ -7,7 +7,9 @@ import java.awt.event.*;
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.File;
 import java.io.IOException;
 
@@ -37,6 +39,12 @@ public class FileExplorer extends JPanel {
 
     public FileExplorer(String workdir) {
         this(workdir, 0);
+    }
+
+    public FileExplorer(boolean filler) {
+        this.layer = 0;
+        setBackground(Color.darkGray);
+        setLayout(new BorderLayout());
     }
 
     public FileExplorer(String workdir, int layer) {
@@ -110,6 +118,7 @@ public class FileExplorer extends JPanel {
             }
             JPanel fileContainer = new JPanel(new FlowLayout(0));
             fileContainer.setBackground(Color.darkGray);
+            // fileContainer.setBackground(Color.black);
             JButton f = new JButton(file.getName());
             f.setFont(new Font("Arial", Font.PLAIN, 12));
             f.setBackground(Color.darkGray);
@@ -119,12 +128,19 @@ public class FileExplorer extends JPanel {
             f.setMargin(new Insets(0, 0, 0, 0));
             fileContainer.add(f);
             center.add(fileContainer);
+            // center.add(f);
 
             f.addActionListener(openFileHandler(workdir));
         }
 
         for (File folder : folders)
             center.add(new FileExplorer(workdir + folder.getName() + "/", this.layer + 1));
+
+        if (folders.size() == 0) {
+            FileExplorer filler = new FileExplorer(true);
+            filler.setBackground(Color.darkGray);
+            center.add(filler);
+        }
 
         revalidate();
     }
@@ -141,6 +157,7 @@ public class FileExplorer extends JPanel {
     private void newProto(String workdir) {
         JPanel fileContainer = new JPanel(new FlowLayout(0));
         fileContainer.setBackground(Color.darkGray);
+        // fileContainer.setBackground(Color.black);
 
         JTextField nameField = new JTextField();
         nameField.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -219,17 +236,18 @@ public class FileExplorer extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 JButton src = (JButton) e.getSource();
 
-                try {
-                    BufferedReader buffer = new BufferedReader(
-                            new InputStreamReader(new FileInputStream(workdir + src.getText())));
-
-                    String content = buffer.lines().collect(Collectors.joining(System.lineSeparator()));
-                    buffer.close();
-
-                    Vars.editor.open(workdir + src.getText(), content);
+                // read file
+                String content = "";
+                try (BufferedReader br = new BufferedReader(new FileReader(workdir + src.getText()))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        content += line + "\n";
+                    }
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
+
+                Vars.editor.open(workdir + src.getText(), content);
 
             }
         };

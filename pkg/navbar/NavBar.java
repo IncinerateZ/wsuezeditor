@@ -27,7 +27,8 @@ public class NavBar extends JPanel {
 
     private JLabel title = new JLabel("No File Opened");
 
-    public NavBar() {
+    public NavBar(String workdir) {
+        this.workdir = workdir;
         setBackground(Color.lightGray);
         setLayout(new BorderLayout());
 
@@ -49,8 +50,6 @@ public class NavBar extends JPanel {
                 if (result == JFileChooser.CANCEL_OPTION)
                     return;
 
-                String main = wd.getSelectedFile().getPath();
-
                 new Thread(new Runnable() {
                     public void run() {
                         File cmds = new File("./rnc.bat");
@@ -59,14 +58,12 @@ public class NavBar extends JPanel {
                         try {
                             cmds.createNewFile();
                             FileWriter fw = new FileWriter("./rnc.bat");
-                            String mainClass = new File(workdir).toURI().relativize(new File(main).toURI())
-                                    .getPath();
-                            if (mainClass.split("/").length == 1)
-                                mainClass = new File(workdir).getParentFile().toURI()
-                                        .relativize(new File(workdir).toURI())
-                                        .getPath() + mainClass;
 
-                            fw.write("javac " + mainClass + " \njava " + mainClass.split("\\.")[0]);
+                            fw.write("cd " + wd.getSelectedFile().getParentFile().getParentFile() + "\n javac " +
+                                    wd.getSelectedFile().getParentFile().getName() + "/"
+                                    + wd.getSelectedFile().getName() + " \njava "
+                                    + wd.getSelectedFile().getParentFile().getName() + "/"
+                                    + wd.getSelectedFile().getName().split("\\.")[0]);
                             fw.close();
 
                             Runtime.getRuntime().exec("cmd.exe /c start rnc.bat");

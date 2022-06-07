@@ -75,6 +75,7 @@ public class Editor extends JPanel {
 
             @Override
             public void insertUpdate(DocumentEvent e) {
+                String temptxt = textArea.getText();
                 if (filePath.length() == 0) {
                     textArea.setEditable(false);
                     textArea.setFocusable(false);
@@ -120,16 +121,16 @@ public class Editor extends JPanel {
                     }
                     // Ignore closing bracket
                     if (newLetter.length() == 1 && bracketIndices.getOrDefault(newLetter, -1) >= 20
-                            && (textArea.getText().length() > e.getOffset() + 1
+                            && (temptxt.length() > e.getOffset() + 1
                                     && bracketIndices.getOrDefault(newLetter, -1) == bracketIndices
-                                            .getOrDefault("" + textArea.getText().charAt(e.getOffset() + 1), -2))) {
+                                            .getOrDefault("" + temptxt.charAt(e.getOffset() + 1), -2))) {
                         lastIgnore = bracketIndices.getOrDefault(newLetter, -2);
                         SwingUtilities.invokeLater(new Runnable() {
 
                             public void run() {
                                 ignoreChange = true;
-                                textArea.setText(textArea.getText().substring(0, e.getOffset())
-                                        + textArea.getText().substring((e.getOffset() + 1)));
+                                textArea.setText(temptxt.substring(0, e.getOffset())
+                                        + temptxt.substring((e.getOffset() + 1)));
                                 textArea.setCaretPosition(e.getOffset() + 1);
                             }
                         });
@@ -137,11 +138,12 @@ public class Editor extends JPanel {
 
                     // Insert bracket pair
                     String pair = bracketPairs.getOrDefault(newLetter, "");
-                    String firstHalf = textArea.getText().substring(0, e.getOffset() + 1);
-                    String lastHalf = textArea.getText().substring(e.getOffset() + e.getLength());
                     if (pair.length() > 0 && lastIgnore != 23 && lastIgnore != 24) {
                         SwingUtilities.invokeLater(new Runnable() {
                             public void run() {
+                                String firstHalf = temptxt.substring(0, e.getOffset() + 1);
+                                String lastHalf = temptxt.substring(e.getOffset() + 1);
+
                                 ignoreChange = true;
                                 textArea.setText(firstHalf + pair + lastHalf);
                                 textArea.setCaretPosition(e.getOffset() + pair.length());
@@ -151,22 +153,21 @@ public class Editor extends JPanel {
 
                     lastIgnore = -2;
 
-                } catch (BadLocationException e1) {
-                    e1.printStackTrace();
-                }
-
-                // Replace tab character with 4 spaces
-                if (!ignoreChange)
+                    // Replace tab character with 4 spaces
+                    // if (!ignoreChange)
                     SwingUtilities.invokeLater(new Runnable() {
 
                         public void run() {
-                            last = textArea.getText();
-                            replaceTabs(e);
+                            replaceTabs(e, newLetter);
                             ignoreChange = false;
                         }
 
                     });
-                movePointer();
+                    movePointer();
+                    last = temptxt;
+                } catch (BadLocationException e1) {
+                    e1.printStackTrace();
+                }
 
             }
 
@@ -213,6 +214,14 @@ public class Editor extends JPanel {
     }
 
     public void open(String path, String contents) {
+        last = contents;
+
+        ignoreChange = true;
+        lastIgnore = -2;
+        moveCaret = -1;
+
+        isEditable = true;
+
         filePath = path;
         textArea.setText(contents);
         textArea.setCaretPosition(0);
@@ -234,22 +243,14 @@ public class Editor extends JPanel {
         }
     }
 
-    private void movePointer(int point) {
-        if (point >= 0) {
-            ActionListener task = new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    if (point >= 0)
-                        textArea.setCaretPosition(point);
-                }
-            };
+    private void replaceTabs(DocumentEvent e, String newLetter) {
 
-            new Timer(1, task).start();
-        }
-    }
-
-    private void replaceTabs(DocumentEvent e) {
+        if (!newLetter.equals("\t"))
+            return;
         ignoreChange = true;
         String replaced = textArea.getText().replaceAll("\t", "    ");
+        if (replaced.equals(last))
+            return;
         if (replaced.length() - textArea.getText().length() >= 3) {
             moveCaret = textArea.getCaret().getDot();
             textArea.setText(replaced);

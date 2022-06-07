@@ -7,6 +7,6 @@ import pkg.navbar.NavBar;
 public class Vars {
     public static FileExplorer fileExplorer;
     public static Editor editor = new Editor();
-    public static NavBar navbar = new NavBar();
+    public static NavBar navbar;
     public static EzEditor main;
 }
