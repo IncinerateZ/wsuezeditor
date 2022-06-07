@@ -215,6 +215,9 @@ public class Editor extends JPanel {
     public void open(String path, String contents) {
         filePath = path;
         textArea.setText(contents);
+        textArea.setCaretPosition(0);
+        String[] temp = path.split("/");
+        Vars.navbar.setEditorTitle(temp[temp.length - 1]);
     }
 
     public void setContents(String contents) {

@@ -13,6 +13,7 @@ import javax.swing.text.BadLocationException;
 import pkg.fileexplorer.FileExplorer;
 
 public class EzEditor {
+
     public EzEditor(String workspace) {
         JFrame main = new JFrame("EzEditor for Java");
 
@@ -20,21 +21,21 @@ public class EzEditor {
 
         main.setLayout(new BorderLayout());
         main.add(Vars.navbar, BorderLayout.NORTH);
-        main.add(new JScrollPane(Vars.fileExplorer, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.WEST);
+        JScrollPane fileExplorerScroller = new JScrollPane(Vars.fileExplorer, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        fileExplorerScroller.getVerticalScrollBar().setUnitIncrement(10);
+        main.add(fileExplorerScroller, BorderLayout.WEST);
         main.add(new JScrollPane(Vars.editor,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
 
         main.getContentPane().add(Vars.editor);
 
-        main.setSize(800, 700);
+        main.setSize(1280, 720);
         main.setVisible(true);
         main.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // TODOs
-        // handle file & folder creation
-        // handle compiling
+        Vars.main = this;
     }
 
     public static void main(String[] args) throws BadLocationException, IOException, ClassNotFoundException,
@@ -56,6 +57,7 @@ public class EzEditor {
         String workdir = wd.getSelectedFile() == null ? wd.getCurrentDirectory().getPath()
                 : wd.getSelectedFile().getPath();
 
+        Vars.navbar.workdir = workdir + '/';
         EzEditor main = new EzEditor(workdir + "/");
     };
 }
